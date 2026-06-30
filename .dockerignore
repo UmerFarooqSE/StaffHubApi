@@ -1,0 +1,12 @@
+.env
+.env.example
+.git
+.gitignore
+.vs
+.vscode
+**/*.md
+README.md
+**/bin/
+**/obj/
+Dockerfile
+docker-compose*.yml
