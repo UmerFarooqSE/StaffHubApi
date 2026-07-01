@@ -1,3 +1,5 @@
+// StaffHubApi - .NET 9 Web API
+// Deployed via GitHub Actions CI/CD pipeline
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHealthChecks();
 
@@ -39,4 +41,3 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
-// Dev branch test commit
