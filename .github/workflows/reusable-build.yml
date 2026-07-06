@@ -39,7 +39,7 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Check code formatting
-        run: dotnet format --verify-no-changes --verbosity diagnostic
+        run: dotnet format StaffHubApi.sln --verify-no-changes --verbosity diagnostic
 
       - name: Test
         run: dotnet test --no-build --verbosity normal
