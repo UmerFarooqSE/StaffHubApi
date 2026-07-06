@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 env:
-  AZURE_WEBAPP_NAME: your-app-name-here
+  AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
 
 jobs:
   build-and-test:
