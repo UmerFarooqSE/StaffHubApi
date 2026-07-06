@@ -16,11 +16,4 @@ public class WeatherForecastTests
         // Assert
         Assert.Equal(expectedCount, result.Length);
     }
-
-    [Fact]
-    public void GetForecast_WhenCalled_ReturnsInvalidCount()
-    {
-        // This test deliberately fails to demonstrate pipeline blocking
-        Assert.Equal(3, 1 + 1);
-    }
 }
