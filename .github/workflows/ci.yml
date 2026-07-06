@@ -52,7 +52,7 @@ jobs:
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/staffhubapi:${{ github.sha }}
 
       - name: Publish
-        run: dotnet publish -c Release -o ./publish
+        run: dotnet publish StaffHubApi.csproj -c Release -o ./publish
 
       - name: Azure login
         uses: azure/login@v2
