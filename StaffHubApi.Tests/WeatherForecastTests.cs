@@ -1,4 +1,6 @@
-﻿namespace StaffHubApi.Tests;
+﻿using Xunit;
+
+namespace StaffHubApi.Tests;
 
 public class WeatherForecastTests
 {
