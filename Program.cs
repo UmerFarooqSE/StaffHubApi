@@ -1,6 +1,9 @@
 // StaffHubApi - .NET 9 Web API
 // Deployed via GitHub Actions CI/CD pipeline
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<StaffHubDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+    .UseSnakeCaseNamingConvention());
 builder.Services.AddHealthChecks();
 
 // Add services to the container.
