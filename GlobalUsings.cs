@@ -1,3 +1,8 @@
 global using Microsoft.EntityFrameworkCore;
 global using StaffHubApi.Data;
 global using StaffHubApi.Models;
+global using Dapper;
+global using Npgsql;
+global using StaffHubApi.Dtos;
+global using StaffHubApi.Repositories;
+global using Microsoft.AspNetCore.Mvc;
