@@ -9,7 +9,8 @@ builder.Services.AddDbContext<StaffHubDbContext>(options =>
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<StaffHubDbContext>("postgresql");
+    .AddDbContextCheck<StaffHubDbContext>("postgresql")
+    .AddRedis(builder.Configuration.GetConnectionString("Redis")!, "redis");
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -22,6 +23,15 @@ builder.Services.AddControllers()
     });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "StaffHubApi:";
+});
+builder.Services.AddSingleton<ICacheService, CacheService>();
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(
+        builder.Configuration.GetConnectionString("Redis")!));
 
 var app = builder.Build();
 app.UseExceptionHandler();

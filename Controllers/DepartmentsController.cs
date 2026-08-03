@@ -5,24 +5,40 @@ namespace StaffHubApi.Controllers;
 public class DepartmentsController : ControllerBase
 {
     private readonly StaffHubDbContext _context;
+    private readonly ICacheService _cache;
 
-    public DepartmentsController(StaffHubDbContext context)
+    public DepartmentsController(StaffHubDbContext context, ICacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
+        const string cacheKey = "departments:all";
+
+        var cached = await _cache.GetAsync<List<Department>>(cacheKey);
+        if (cached is not null)
+            return Ok(cached);
+
         var departments = await _context.Departments
             .OrderBy(d => d.Name)
             .ToListAsync();
+
+        await _cache.SetAsync(cacheKey, departments, TimeSpan.FromMinutes(10));
         return Ok(departments);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
+        var cacheKey = $"departments:{id}";
+
+        var cached = await _cache.GetAsync<Department>(cacheKey);
+        if (cached is not null)
+            return Ok(cached);
+
         var department = await _context.Departments
             .Include(d => d.Employees)
             .FirstOrDefaultAsync(d => d.Id == id);
@@ -30,6 +46,7 @@ public class DepartmentsController : ControllerBase
         if (department is null)
             return NotFound();
 
+        await _cache.SetAsync(cacheKey, department, TimeSpan.FromMinutes(10));
         return Ok(department);
     }
 
@@ -44,6 +61,9 @@ public class DepartmentsController : ControllerBase
 
         _context.Departments.Add(department);
         await _context.SaveChangesAsync();
+
+        await _cache.RemoveByPrefixAsync("departments:");
+        await _cache.RemoveByPrefixAsync("employees:");
 
         return CreatedAtAction(nameof(GetById), new { id = department.Id }, department);
     }
@@ -60,6 +80,10 @@ public class DepartmentsController : ControllerBase
         department.Description = request.Description;
 
         await _context.SaveChangesAsync();
+
+        await _cache.RemoveByPrefixAsync("departments:");
+        await _cache.RemoveByPrefixAsync("employees:");
+
         return Ok(department);
     }
 
@@ -73,6 +97,10 @@ public class DepartmentsController : ControllerBase
 
         _context.Departments.Remove(department);
         await _context.SaveChangesAsync();
+
+        await _cache.RemoveByPrefixAsync("departments:");
+        await _cache.RemoveByPrefixAsync("employees:");
+
         return NoContent();
     }
 }

@@ -8,3 +8,7 @@ global using StaffHubApi.Repositories;
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.AspNetCore.Diagnostics;
 global using StaffHubApi.Infrastructure;
+global using HealthChecks.Redis;
+global using System.Text.Json;
+global using Microsoft.Extensions.Caching.Distributed;
+global using StackExchange.Redis;
