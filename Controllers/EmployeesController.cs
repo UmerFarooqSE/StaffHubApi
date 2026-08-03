@@ -6,48 +6,77 @@ public class EmployeesController : ControllerBase
 {
     private readonly StaffHubDbContext _context;
     private readonly IEmployeeRepository _employeeRepository;
+    private readonly ICacheService _cache;
 
-    public EmployeesController(StaffHubDbContext context, IEmployeeRepository employeeRepository)
+    public EmployeesController(
+        StaffHubDbContext context,
+        IEmployeeRepository employeeRepository,
+        ICacheService cache)
     {
         _context = context;
         _employeeRepository = employeeRepository;
+        _cache = cache;
     }
 
-    // EF Core: simple list
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
+        const string cacheKey = "employees:all";
+
+        var cached = await _cache.GetAsync<List<Employee>>(cacheKey);
+        if (cached is not null)
+            return Ok(cached);
+
         var employees = await _context.Employees
             .Include(e => e.Department)
             .OrderBy(e => e.FullName)
             .ToListAsync();
+
+        await _cache.SetAsync(cacheKey, employees, TimeSpan.FromMinutes(5));
         return Ok(employees);
     }
 
-    // Dapper: complex summary with department name joined
     [HttpGet("summaries")]
     public async Task<IActionResult> GetSummaries()
     {
+        const string cacheKey = "employees:summaries";
+
+        var cached = await _cache.GetAsync<IEnumerable<EmployeeSummary>>(cacheKey);
+        if (cached is not null)
+            return Ok(cached);
+
         var summaries = await _employeeRepository.GetEmployeeSummariesAsync();
+        await _cache.SetAsync(cacheKey, summaries, TimeSpan.FromMinutes(5));
         return Ok(summaries);
     }
 
-    // Dapper: detailed view with colleague count
     [HttpGet("{id:guid}/detail")]
     public async Task<IActionResult> GetDetail(Guid id)
     {
+        var cacheKey = $"employees:{id}:detail";
+
+        var cached = await _cache.GetAsync<EmployeeDetail>(cacheKey);
+        if (cached is not null)
+            return Ok(cached);
+
         var detail = await _employeeRepository.GetEmployeeDetailAsync(id);
 
         if (detail is null)
             return NotFound();
 
+        await _cache.SetAsync(cacheKey, detail, TimeSpan.FromMinutes(5));
         return Ok(detail);
     }
 
-    // EF Core: get by ID
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
+        var cacheKey = $"employees:{id}";
+
+        var cached = await _cache.GetAsync<Employee>(cacheKey);
+        if (cached is not null)
+            return Ok(cached);
+
         var employee = await _context.Employees
             .Include(e => e.Department)
             .FirstOrDefaultAsync(e => e.Id == id);
@@ -55,10 +84,10 @@ public class EmployeesController : ControllerBase
         if (employee is null)
             return NotFound();
 
+        await _cache.SetAsync(cacheKey, employee, TimeSpan.FromMinutes(5));
         return Ok(employee);
     }
 
-    // EF Core: create
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request)
     {
@@ -79,10 +108,12 @@ public class EmployeesController : ControllerBase
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync();
 
+        await _cache.RemoveByPrefixAsync("employees:");
+        await _cache.RemoveByPrefixAsync("departments:");
+
         return CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee);
     }
 
-    // EF Core: update
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEmployeeRequest request)
     {
@@ -98,10 +129,13 @@ public class EmployeesController : ControllerBase
         employee.DepartmentId = request.DepartmentId;
 
         await _context.SaveChangesAsync();
+
+        await _cache.RemoveByPrefixAsync("employees:");
+        await _cache.RemoveByPrefixAsync("departments:");
+
         return Ok(employee);
     }
 
-    // EF Core: delete
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -112,6 +146,10 @@ public class EmployeesController : ControllerBase
 
         _context.Employees.Remove(employee);
         await _context.SaveChangesAsync();
+
+        await _cache.RemoveByPrefixAsync("employees:");
+        await _cache.RemoveByPrefixAsync("departments:");
+
         return NoContent();
     }
 }
