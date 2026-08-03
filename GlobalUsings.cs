@@ -6,3 +6,5 @@ global using Npgsql;
 global using StaffHubApi.Dtos;
 global using StaffHubApi.Repositories;
 global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.AspNetCore.Diagnostics;
+global using StaffHubApi.Infrastructure;
