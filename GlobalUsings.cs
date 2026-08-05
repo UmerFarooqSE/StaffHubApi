@@ -12,3 +12,5 @@ global using HealthChecks.Redis;
 global using System.Text.Json;
 global using Microsoft.Extensions.Caching.Distributed;
 global using StackExchange.Redis;
+global using Serilog;
+global using Asp.Versioning;

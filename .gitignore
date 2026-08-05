@@ -152,3 +152,8 @@ $RECYCLE.BIN/
 *.pem
 appsettings.Development.json
 secrets.json
+
+# ==========================================
+# Logs
+# ==========================================
+logs/
