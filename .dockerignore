@@ -10,3 +10,4 @@ README.md
 **/obj/
 Dockerfile
 docker-compose*.yml
+appsettings.Development.json
