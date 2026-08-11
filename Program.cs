@@ -25,10 +25,6 @@ try
 
     builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
-    builder.Services.AddHealthChecks()
-        .AddDbContextCheck<StaffHubDbContext>("postgresql")
-        .AddRedis(builder.Configuration.GetConnectionString("Redis")!, "redis");
-
     // Add services to the container.
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
@@ -51,15 +47,38 @@ try
         }).AddMvc();
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddProblemDetails();
-    builder.Services.AddStackExchangeRedisCache(options =>
+
+    var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+    var redisAvailable = !string.IsNullOrEmpty(redisConnectionString);
+
+    if (redisAvailable)
     {
-        options.Configuration = builder.Configuration.GetConnectionString("Redis");
-        options.InstanceName = "StaffHubApi:";
-    });
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnectionString;
+            options.InstanceName = "StaffHubApi:";
+        });
+
+        builder.Services.AddSingleton<IConnectionMultiplexer>(
+            ConnectionMultiplexer.Connect(redisConnectionString!));
+    }
+    else
+    {
+        builder.Services.AddDistributedMemoryCache();
+
+        builder.Services.AddSingleton<IConnectionMultiplexer>(
+            ConnectionMultiplexer.Connect("localhost:6379,abortConnect=false"));
+    }
+
     builder.Services.AddSingleton<ICacheService, CacheService>();
-    builder.Services.AddSingleton<IConnectionMultiplexer>(
-        ConnectionMultiplexer.Connect(
-            builder.Configuration.GetConnectionString("Redis")!));
+
+    var healthBuilder = builder.Services.AddHealthChecks()
+    .AddDbContextCheck<StaffHubDbContext>("postgresql");
+
+    if (redisAvailable)
+    {
+        healthBuilder.AddRedis(redisConnectionString!, "redis");
+    }
 
     var app = builder.Build();
     app.UseSerilogRequestLogging(options =>
