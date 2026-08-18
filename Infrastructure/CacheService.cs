@@ -71,6 +71,13 @@ public class CacheService : ICacheService
 
     public async Task RemoveByPrefixAsync(string prefix)
     {
+
+        if (_redis is null)
+        {
+            await RemoveAsync(prefix);
+            return;
+        }
+
         try
         {
             var server = _redis.GetServer(_redis.GetEndPoints().First());
