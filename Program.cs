@@ -80,6 +80,8 @@ try
         healthBuilder.AddRedis(redisConnectionString!, "redis");
     }
 
+    builder.Services.AddSingleton<IServiceBusService, ServiceBusService>();
+
     var app = builder.Build();
     app.UseSerilogRequestLogging(options =>
         {

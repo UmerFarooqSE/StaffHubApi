@@ -8,15 +8,18 @@ public class EmployeesController : ControllerBase
     private readonly StaffHubDbContext _context;
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ICacheService _cache;
+    private readonly IServiceBusService _serviceBus;
 
     public EmployeesController(
         StaffHubDbContext context,
         IEmployeeRepository employeeRepository,
-        ICacheService cache)
+        ICacheService cache,
+        IServiceBusService serviceBus)
     {
         _context = context;
         _employeeRepository = employeeRepository;
         _cache = cache;
+        _serviceBus = serviceBus;
     }
 
     [HttpGet]
@@ -101,7 +104,7 @@ public class EmployeesController : ControllerBase
             FullName = request.FullName,
             Email = request.Email,
             JobTitle = request.JobTitle,
-            HireDate = request.HireDate,
+            HireDate = DateTime.SpecifyKind(request.HireDate, DateTimeKind.Utc),
             DepartmentId = request.DepartmentId,
             IsActive = true
         };
@@ -111,6 +114,11 @@ public class EmployeesController : ControllerBase
 
         await _cache.RemoveByPrefixAsync("employees:");
         await _cache.RemoveByPrefixAsync("departments:");
+
+        await _serviceBus.SendEmployeeCreatedMessageAsync(
+            employee.Id,
+            employee.FullName,
+            employee.Email);
 
         return CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee);
     }
