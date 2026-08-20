@@ -1,4 +1,5 @@
 global using Asp.Versioning;
+global using Azure.Identity;
 global using Azure.Messaging.ServiceBus;
 global using Dapper;
 global using HealthChecks.Redis;

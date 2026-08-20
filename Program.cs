@@ -8,6 +8,13 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+    var keyVaultUrl = builder.Configuration["KeyVault__Url"];
+    if (!string.IsNullOrEmpty(keyVaultUrl))
+    {
+        builder.Configuration.AddAzureKeyVault(
+            new Uri(keyVaultUrl),
+            new DefaultAzureCredential());
+    }
     builder.Host.UseSerilog((context, services, configuration) =>
         {
             configuration
