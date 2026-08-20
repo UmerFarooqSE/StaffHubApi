@@ -8,6 +8,7 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddApplicationInsightsTelemetry();
     var keyVaultUrl = builder.Configuration["KeyVault__Url"];
     if (!string.IsNullOrEmpty(keyVaultUrl))
     {
@@ -68,16 +69,14 @@ try
 
         builder.Services.AddSingleton<IConnectionMultiplexer>(
             ConnectionMultiplexer.Connect(redisConnectionString!));
+
+        builder.Services.AddSingleton<ICacheService, CacheService>();
     }
     else
     {
-        builder.Services.AddDistributedMemoryCache();
-
-        builder.Services.AddSingleton<IConnectionMultiplexer>(
-            ConnectionMultiplexer.Connect("localhost:6379,abortConnect=false"));
+        Log.Warning("Redis connection string not found. Caching is disabled; using NullCacheService.");
+        builder.Services.AddSingleton<ICacheService, NullCacheService>();
     }
-
-    builder.Services.AddSingleton<ICacheService, CacheService>();
 
     var healthBuilder = builder.Services.AddHealthChecks()
     .AddDbContextCheck<StaffHubDbContext>("postgresql");
